@@ -15,7 +15,7 @@ struct GlobalStatus {
     String lastOperationStatus = "";
     String wifiSsid = "";
     String wifiPassword = "";
-    String deviceName = "Alarmista";
+    String deviceName = "";
 };
 
 extern GlobalStatus globalStatus;

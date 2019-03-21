@@ -17,7 +17,7 @@ void setup()
 {
   Serial.begin(115200);
 
-  Log.begin(LOG_LEVEL_TRACE, &Serial, true);
+  Log.begin(LOG_LEVEL_NOTICE, &Serial, true);
 
   settingsInit();
 
