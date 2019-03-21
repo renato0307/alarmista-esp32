@@ -85,6 +85,6 @@ bool settingsSaveAlarm(Alarm alarm)
 
     return preferences.putUInt((ALARM_NUMBER + String(number)).c_str(), alarm.number) > 0 
         && preferences.putULong((ALARM_WHEN + String(number)).c_str(), alarm.when) > 0 
-        && preferences.putString((ALARM_WHEN + String(number)).c_str(), alarm.song) > 0 
+        && preferences.putString((ALARM_SONG + String(number)).c_str(), alarm.song) > 0 
         && preferences.putUInt((ALARM_ACTIVE + String(number)).c_str(), alarm.activeMatrix) > 0;
 }
