@@ -12,6 +12,8 @@ const String ALARM_WHEN = "alarm-when-";
 const String ALARM_SONG = "alarm-song-";
 const String ALARM_ACTIVE = "alarm-active-";
 
+const String IN_DEEP_SLEEP = "in-deep-sleep";
+
 Preferences preferences;
 
 // settingsInit needs to be called (maybe in setup)
@@ -56,6 +58,12 @@ Alarm settingsGetAlarm(uint number)
     return alarm;
 }
 
+// settingsGetInDeepSleep returns the value of the flag indicating if the current status is deep sleep
+bool settingsGetInDeepSleep() 
+{
+    return preferences.getBool(IN_DEEP_SLEEP.c_str());
+}
+
 // settingsSaveDeviceName stores the device name in the preferences
 bool settingsSaveDeviceName(String name)
 {
@@ -87,4 +95,10 @@ bool settingsSaveAlarm(Alarm alarm)
         && preferences.putULong((ALARM_WHEN + String(number)).c_str(), alarm.when) > 0 
         && preferences.putString((ALARM_SONG + String(number)).c_str(), alarm.song) > 0 
         && preferences.putUInt((ALARM_ACTIVE + String(number)).c_str(), alarm.activeMatrix) > 0;
+}
+
+// settingsSaveInDeepSleep stores a flag indicating if the current  status is deep sleep
+bool settingsSaveInDeepSleep(bool value) 
+{
+    return preferences.putBool(IN_DEEP_SLEEP.c_str(), value) > 0;
 }

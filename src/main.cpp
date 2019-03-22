@@ -33,6 +33,12 @@ void setup()
 
 void loop()
 {
+  globalStatus.inDeepSleep = settingsGetInDeepSleep();
+  if (globalStatus.inDeepSleep) {
+    Log.trace("Waking up from deep sleep\n");
+     machine.transitionTo(deepSleepState);
+  }
+  
   machine.run();
   delay(STATE_DELAY);
 }

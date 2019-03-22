@@ -15,6 +15,8 @@ String settingsGetWifiPassword();
 
 Alarm settingsGetAlarm(uint number);
 
+bool settingsGetInDeepSleep();
+
 bool settingsSaveWifiSsid(String ssid);
 
 bool settingsSaveWifiPassword(String password);
@@ -22,5 +24,7 @@ bool settingsSaveWifiPassword(String password);
 bool settingsSaveDeviceName(String name);
 
 bool settingsSaveAlarm(Alarm alarm);
+
+bool settingsSaveInDeepSleep(bool value);
 
 #endif 
