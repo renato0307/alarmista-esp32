@@ -12,10 +12,12 @@ struct Alarm {
 
 struct GlobalStatus {
     bool isBleInitialized = false;
+    bool goToSleep = false;
     String lastOperationStatus = "";
     String wifiSsid = "";
     String wifiPassword = "";
     String deviceName = "";
+    SemaphoreHandle_t sleepMutex;
 };
 
 extern GlobalStatus globalStatus;

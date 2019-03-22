@@ -19,6 +19,7 @@
 #define WIFI_STATUS_CHARACTERISTIC_UUID             "db041866-4f73-4e78-be6f-59ab4152b2a1"
 #define ALARM_SET_CHARACTERISTIC_UUID               "34adb56d-e9fd-4892-816f-f3c31f1d0d98"
 #define LAST_OPERATION_STATUS_CHARACTERISTIC_UUID   "d5821d4f-17b5-4c3a-b46c-d7fa23cb78f6"
+#define GO_TO_SLEEP_CHARACTERISTIC_UUID             "9501faf3-b697-40de-ad74-0a10f5e2de2c"
 
 const String LAST_OPERATION_STATUS_SUCCESS = "0";
 const String LAST_OPERATION_STATUS_INVALID_ALARM_MISSING_FIELDS = "1";
@@ -35,6 +36,7 @@ void saveAlarm(String value);
    Private functions 
    ========================================================================= */
 
+// LastOperationStatusBLEConfCallback handles last operation status fetch ble command
 class LastOperationStatusBLEConfCallback : public BLECharacteristicCallbacks
 {
   void onRead(BLECharacteristic *pCharacteristic)
@@ -44,6 +46,7 @@ class LastOperationStatusBLEConfCallback : public BLECharacteristicCallbacks
   }
 };
 
+// AlarmSetBLEConfCallback handles alarm set ble command
 class AlarmSetBLEConfCallback : public BLECharacteristicCallbacks
 {
 
@@ -57,6 +60,7 @@ class AlarmSetBLEConfCallback : public BLECharacteristicCallbacks
   }
 };
 
+// WifiSetSsidBLEConfCallback handles wifi ssid set ble command
 class WifiSetSsidBLEConfCallback : public BLECharacteristicCallbacks
 {
 
@@ -70,6 +74,7 @@ class WifiSetSsidBLEConfCallback : public BLECharacteristicCallbacks
   }
 };
 
+// WifiResetBLEConfCallback handles wifi reset ble command
 class WifiResetBLEConfCallback : public BLECharacteristicCallbacks
 {
   void onWrite(BLECharacteristic *pCharacteristic)
@@ -87,6 +92,7 @@ class WifiResetBLEConfCallback : public BLECharacteristicCallbacks
   }
 };
 
+// WifiSetPasswordBLEConfCallback handles set wifi password ble command
 class WifiSetPasswordBLEConfCallback : public BLECharacteristicCallbacks
 {
   void onWrite(BLECharacteristic *pCharacteristic)
@@ -99,6 +105,20 @@ class WifiSetPasswordBLEConfCallback : public BLECharacteristicCallbacks
   }
 };
 
+// GoToSleepBLEConfCallback handles go to sleep ble command
+class GoToSleepBLEConfCallback : public BLECharacteristicCallbacks
+{
+  void onWrite(BLECharacteristic *pCharacteristic)
+  {
+    Log.notice("entering sleep mode\n");
+    
+    xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
+    globalStatus.goToSleep = true;
+    xSemaphoreGive(globalStatus.sleepMutex);
+  }
+};
+
+// WifiStatusBLEConfCallback handles wifi status fetch ble command
 class WifiStatusBLEConfCallback : public BLECharacteristicCallbacks
 {
   void onRead(BLECharacteristic *pCharacteristic)
@@ -152,7 +172,8 @@ void initBLE()
       {WIFI_INIT_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new WifiResetBLEConfCallback() },
       {WIFI_STATUS_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ, new WifiStatusBLEConfCallback() },
       {ALARM_SET_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new AlarmSetBLEConfCallback() },
-      {LAST_OPERATION_STATUS_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ, new LastOperationStatusBLEConfCallback() }};
+      {LAST_OPERATION_STATUS_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ, new LastOperationStatusBLEConfCallback() },
+      {GO_TO_SLEEP_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new GoToSleepBLEConfCallback() }};
 
   startBLE(CONFIGURATION_SERVICE_UUID, confs, sizeof(confs) / sizeof(BLECharacteristicConf));
 }
@@ -202,5 +223,15 @@ void configurationStateLoop()
 // and the thing can exit configuration and enter sleep mode.
 bool configurationStateActivateSleep()
 {
-  return false;
+  xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
+
+  Log.trace("going to sleep? %b\n", globalStatus.goToSleep);
+
+  // if true goes to sleep but resets the value for the wake up
+  bool goToSleepFlag = globalStatus.goToSleep;
+  globalStatus.goToSleep = false; 
+
+  xSemaphoreGive(globalStatus.sleepMutex);  
+
+  return goToSleepFlag;
 }

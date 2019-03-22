@@ -4,26 +4,29 @@
 
 #include "Settings.h"
 #include "ConfigurationState.h"
+#include "DeepSleepState.h"
 #include "UnimplementedStates.h"
 
 const int STATE_DELAY = 1000;
 
 StateMachine machine = StateMachine();
 State *configurationState = machine.addState(&configurationStateLoop);
-State *deepSleepState = machine.addState(&loopDeepSleepState);
+State *deepSleepState = machine.addState(&deepSleepStateLoop);
 State *sunriseState = machine.addState(&loopSunriseState);
 
 void setup()
 {
   Serial.begin(115200);
 
-  Log.begin(LOG_LEVEL_NOTICE, &Serial, true);
+  Log.begin(LOG_LEVEL_TRACE, &Serial, true);
 
   settingsInit();
 
+  globalStatus.sleepMutex = xSemaphoreCreateMutex();
+
   configurationState->addTransition(&configurationStateActivateSleep, deepSleepState);
-  deepSleepState->addTransition(&deepSleepButtonInterrupt, configurationState);
-  deepSleepState->addTransition(&deepSleepTimerInterrupt, sunriseState);
+  deepSleepState->addTransition(&deepSleepStateButtonInterrupt, configurationState);
+  deepSleepState->addTransition(&deepSleepStateTimerInterrupt, sunriseState);
   sunriseState->addTransition(&sunriseButtonPress, configurationState);
   sunriseState->addTransition(&sunriseAlarmTimeout, configurationState);
 }
