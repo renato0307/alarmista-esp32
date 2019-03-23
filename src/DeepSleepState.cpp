@@ -22,22 +22,22 @@ void printWakeupReason()
   switch (wakeup_reason)
   {
   case ESP_SLEEP_WAKEUP_EXT0:
-    Log.trace("Wakeup caused by external signal using RTC_IO\n");
+    Log.trace("wakeup caused by external signal using RTC_IO\n");
     break;
   case ESP_SLEEP_WAKEUP_EXT1:
-    Log.trace("Wakeup caused by external signal using RTC_CNTL\n");
+    Log.trace("wakeup caused by external signal using RTC_CNTL\n");
     break;
   case ESP_SLEEP_WAKEUP_TIMER:
-    Log.trace("Wakeup caused by timer\n");
+    Log.trace("wakeup caused by timer\n");
     break;
   case ESP_SLEEP_WAKEUP_TOUCHPAD:
-    Log.trace("Wakeup caused by touchpad\n");
+    Log.trace("wakeup caused by touchpad\n");
     break;
   case ESP_SLEEP_WAKEUP_ULP:
-    Log.trace("Wakeup caused by ULP program\n");
+    Log.trace("wakeup caused by ULP program\n");
     break;
   default:
-    Log.trace("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
+    Log.trace("wakeup was not caused by deep sleep: %d\n", wakeup_reason);
     break;
   }
 }
@@ -66,12 +66,18 @@ void deepSleepStateLoop()
       xSemaphoreGive(globalStatus.sleepMutex);
       return;
     }
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
+    {
+      xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
+      globalStatus.goToSunrise = true;
+      settingsSaveInDeepSleep(false);
+      xSemaphoreGive(globalStatus.sleepMutex);
+      return;
+    }
   }
 
   Log.trace("going to sleep now\n");
-
   settingsSaveInDeepSleep(true);
-
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   Log.trace("setup ESP32 to sleep for every %s seconds\n", String(TIME_TO_SLEEP).c_str());
@@ -97,5 +103,12 @@ bool deepSleepStateButtonInterrupt()
 // interrupted by a timer interrupt
 bool deepSleepStateTimerInterrupt()
 {
-  return false;
+  xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
+
+  Log.trace("going to sunrise? %b\n", globalStatus.goToSunrise);
+  bool goToSunriseFlag = globalStatus.goToSunrise;
+  globalStatus.goToSunrise = false;
+  xSemaphoreGive(globalStatus.sleepMutex);
+
+  return goToSunriseFlag;
 }

@@ -16,6 +16,7 @@ struct GlobalStatus
     bool isBleInitialized = false;
     bool goToSleep = false;
     bool goToConfig = false;
+    bool goToSunrise = false;
     bool inDeepSleep = false;
     String lastOperationStatus = "";
     String wifiSsid = "";
