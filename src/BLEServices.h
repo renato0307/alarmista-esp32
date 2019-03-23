@@ -5,10 +5,10 @@
 
 #include <BLECharacteristic.h>
 
-struct BLECharacteristicConf 
+struct BLECharacteristicConf
 {
   String uuid;
-  uint32_t properties; 
+  uint32_t properties;
   BLECharacteristicCallbacks *callbacks;
 };
 

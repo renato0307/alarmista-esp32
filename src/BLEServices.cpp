@@ -29,14 +29,14 @@ void startBLE(String serviceUuid, BLECharacteristicConf confs[], int confsSize)
     BLEService *pService = pServer->createService(serviceUuid.c_str());
 
     Log.trace("configuring %d ble characteristics\n", confsSize);
-    for (int i = 0; i < confsSize; i++) 
+    for (int i = 0; i < confsSize; i++)
     {
       Log.trace("configuring characteristic %s\n", confs[i].uuid.c_str());
       initCharacteristic(
-        pService,
-        confs[i].uuid,
-        confs[i].properties,
-        confs[i].callbacks);
+          pService,
+          confs[i].uuid,
+          confs[i].properties,
+          confs[i].callbacks);
     }
 
     Log.trace("starting ble service and advertisements\n");
@@ -44,7 +44,7 @@ void startBLE(String serviceUuid, BLECharacteristicConf confs[], int confsSize)
     pServer->getAdvertising()->start();
 
     globalStatus.isBleInitialized = true;
-    
+
     Log.trace("listening on bluetooth as [%s]\n", globalStatus.deviceName.c_str());
   }
 }

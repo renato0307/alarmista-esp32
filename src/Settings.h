@@ -27,4 +27,4 @@ bool settingsSaveAlarm(Alarm alarm);
 
 bool settingsSaveInDeepSleep(bool value);
 
-#endif 
+#endif

@@ -59,7 +59,7 @@ Alarm settingsGetAlarm(uint number)
 }
 
 // settingsGetInDeepSleep returns the value of the flag indicating if the current status is deep sleep
-bool settingsGetInDeepSleep() 
+bool settingsGetInDeepSleep()
 {
     return preferences.getBool(IN_DEEP_SLEEP.c_str());
 }
@@ -91,14 +91,11 @@ bool settingsSaveAlarm(Alarm alarm)
         return false;
     }
 
-    return preferences.putUInt((ALARM_NUMBER + String(number)).c_str(), alarm.number) > 0 
-        && preferences.putULong((ALARM_WHEN + String(number)).c_str(), alarm.when) > 0 
-        && preferences.putString((ALARM_SONG + String(number)).c_str(), alarm.song) > 0 
-        && preferences.putUInt((ALARM_ACTIVE + String(number)).c_str(), alarm.activeMatrix) > 0;
+    return preferences.putUInt((ALARM_NUMBER + String(number)).c_str(), alarm.number) > 0 && preferences.putULong((ALARM_WHEN + String(number)).c_str(), alarm.when) > 0 && preferences.putString((ALARM_SONG + String(number)).c_str(), alarm.song) > 0 && preferences.putUInt((ALARM_ACTIVE + String(number)).c_str(), alarm.activeMatrix) > 0;
 }
 
 // settingsSaveInDeepSleep stores a flag indicating if the current  status is deep sleep
-bool settingsSaveInDeepSleep(bool value) 
+bool settingsSaveInDeepSleep(bool value)
 {
     return preferences.putBool(IN_DEEP_SLEEP.c_str(), value) > 0;
 }

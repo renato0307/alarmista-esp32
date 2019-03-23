@@ -3,14 +3,16 @@
 
 #include <Arduino.h>
 
-struct Alarm {
+struct Alarm
+{
     uint number;
     long when;
     String song;
     uint activeMatrix;
 };
 
-struct GlobalStatus {
+struct GlobalStatus
+{
     bool isBleInitialized = false;
     bool goToSleep = false;
     bool goToConfig = false;

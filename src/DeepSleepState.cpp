@@ -6,26 +6,39 @@
 #include "GlobalStatus.h"
 #include "Settings.h"
 
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  300      /* Time ESP32 will go to sleep (in seconds) */
+#define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP 300      /* Time ESP32 will go to sleep (in seconds) */
 
 /* ========================================================================= 
    Private functions 
    ========================================================================= */
-   
-void printWakeupReason(){
+
+void printWakeupReason()
+{
   esp_sleep_wakeup_cause_t wakeup_reason;
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
-  switch(wakeup_reason)
+  switch (wakeup_reason)
   {
-    case ESP_SLEEP_WAKEUP_EXT0 : Log.trace("Wakeup caused by external signal using RTC_IO\n"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Log.trace("Wakeup caused by external signal using RTC_CNTL\n"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Log.trace("Wakeup caused by timer\n"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Log.trace("Wakeup caused by touchpad\n"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Log.trace("Wakeup caused by ULP program\n"); break;
-    default : Log.trace("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  case ESP_SLEEP_WAKEUP_EXT0:
+    Log.trace("Wakeup caused by external signal using RTC_IO\n");
+    break;
+  case ESP_SLEEP_WAKEUP_EXT1:
+    Log.trace("Wakeup caused by external signal using RTC_CNTL\n");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    Log.trace("Wakeup caused by timer\n");
+    break;
+  case ESP_SLEEP_WAKEUP_TOUCHPAD:
+    Log.trace("Wakeup caused by touchpad\n");
+    break;
+  case ESP_SLEEP_WAKEUP_ULP:
+    Log.trace("Wakeup caused by ULP program\n");
+    break;
+  default:
+    Log.trace("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
+    break;
   }
 }
 
@@ -37,24 +50,24 @@ void printWakeupReason(){
 void deepSleepStateLoop()
 {
   Log.notice("=> entering state: DeepSleep\n");
-  
-  if (globalStatus.inDeepSleep) 
-  {
-      Log.trace("waking up...\n");
-      printWakeupReason();
 
-      esp_sleep_wakeup_cause_t wakeup_reason;
-      wakeup_reason = esp_sleep_get_wakeup_cause();
-      if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) 
-      {
-          xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
-          globalStatus.goToConfig = true; 
-          settingsSaveInDeepSleep(false);
-          xSemaphoreGive(globalStatus.sleepMutex);
-          return;
-      }
-  } 
-  
+  if (globalStatus.inDeepSleep)
+  {
+    Log.trace("waking up...\n");
+    printWakeupReason();
+
+    esp_sleep_wakeup_cause_t wakeup_reason;
+    wakeup_reason = esp_sleep_get_wakeup_cause();
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0)
+    {
+      xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
+      globalStatus.goToConfig = true;
+      settingsSaveInDeepSleep(false);
+      xSemaphoreGive(globalStatus.sleepMutex);
+      return;
+    }
+  }
+
   Log.trace("going to sleep now\n");
 
   settingsSaveInDeepSleep(true);
@@ -63,26 +76,26 @@ void deepSleepStateLoop()
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   Log.trace("setup ESP32 to sleep for every %s seconds\n", String(TIME_TO_SLEEP).c_str());
 
-  esp_deep_sleep_start();      
+  esp_deep_sleep_start();
 }
 
-// deepSleepStateButtonInterrupt will return true when the sleep was 
+// deepSleepStateButtonInterrupt will return true when the sleep was
 // interrupted by a button press
 bool deepSleepStateButtonInterrupt()
 {
-    xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
+  xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
 
-    Log.trace("going to config? %b\n", globalStatus.goToConfig);
-    bool goToConfigFlag = globalStatus.goToConfig;
-    globalStatus.goToConfig = false; 
-    xSemaphoreGive(globalStatus.sleepMutex);  
+  Log.trace("going to config? %b\n", globalStatus.goToConfig);
+  bool goToConfigFlag = globalStatus.goToConfig;
+  globalStatus.goToConfig = false;
+  xSemaphoreGive(globalStatus.sleepMutex);
 
-    return goToConfigFlag;
+  return goToConfigFlag;
 }
 
-// deepSleepStateTimerInterrupt will return true when the sleep was 
+// deepSleepStateTimerInterrupt will return true when the sleep was
 // interrupted by a timer interrupt
-bool deepSleepStateTimerInterrupt() 
+bool deepSleepStateTimerInterrupt()
 {
-    return false;
+  return false;
 }

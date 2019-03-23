@@ -12,14 +12,14 @@
 #include "WifiServices.h"
 #include "Settings.h"
 
-#define CONFIGURATION_SERVICE_UUID                  "208cf64a-e85b-4f7e-9653-83aeb1c117c9"
-#define WIFI_SET_SSID_CHARACTERISTIC_UUID           "cc0bd427-c9c3-43b0-a7c6-2df108b2b7c4"
-#define WIFI_SET_PASSWORD_CHARACTERISTIC_UUID       "9200f537-e530-4f2a-b446-a5db5f3fc82f"
-#define WIFI_INIT_CHARACTERISTIC_UUID               "b98d1c2c-cca5-44ee-b7d2-11e79a6b192e"
-#define WIFI_STATUS_CHARACTERISTIC_UUID             "db041866-4f73-4e78-be6f-59ab4152b2a1"
-#define ALARM_SET_CHARACTERISTIC_UUID               "34adb56d-e9fd-4892-816f-f3c31f1d0d98"
-#define LAST_OPERATION_STATUS_CHARACTERISTIC_UUID   "d5821d4f-17b5-4c3a-b46c-d7fa23cb78f6"
-#define GO_TO_SLEEP_CHARACTERISTIC_UUID             "9501faf3-b697-40de-ad74-0a10f5e2de2c"
+#define CONFIGURATION_SERVICE_UUID "208cf64a-e85b-4f7e-9653-83aeb1c117c9"
+#define WIFI_SET_SSID_CHARACTERISTIC_UUID "cc0bd427-c9c3-43b0-a7c6-2df108b2b7c4"
+#define WIFI_SET_PASSWORD_CHARACTERISTIC_UUID "9200f537-e530-4f2a-b446-a5db5f3fc82f"
+#define WIFI_INIT_CHARACTERISTIC_UUID "b98d1c2c-cca5-44ee-b7d2-11e79a6b192e"
+#define WIFI_STATUS_CHARACTERISTIC_UUID "db041866-4f73-4e78-be6f-59ab4152b2a1"
+#define ALARM_SET_CHARACTERISTIC_UUID "34adb56d-e9fd-4892-816f-f3c31f1d0d98"
+#define LAST_OPERATION_STATUS_CHARACTERISTIC_UUID "d5821d4f-17b5-4c3a-b46c-d7fa23cb78f6"
+#define GO_TO_SLEEP_CHARACTERISTIC_UUID "9501faf3-b697-40de-ad74-0a10f5e2de2c"
 
 const String LAST_OPERATION_STATUS_SUCCESS = "0";
 const String LAST_OPERATION_STATUS_INVALID_ALARM_MISSING_FIELDS = "1";
@@ -77,7 +77,7 @@ class WifiSetSsidBLEConfCallback : public BLECharacteristicCallbacks
   {
     pCharacteristic->setValue(globalStatus.wifiSsid.c_str());
     Log.verbose("returning wifi ssid: %s\n", globalStatus.wifiSsid.c_str());
-  }    
+  }
 };
 
 // WifiResetBLEConfCallback handles wifi reset ble command
@@ -114,7 +114,7 @@ class WifiSetPasswordBLEConfCallback : public BLECharacteristicCallbacks
   {
     pCharacteristic->setValue(globalStatus.wifiPassword.c_str());
     Log.verbose("returning wifi password: %s\n", globalStatus.wifiPassword.c_str());
-  }  
+  }
 };
 
 // GoToSleepBLEConfCallback handles go to sleep ble command
@@ -123,7 +123,7 @@ class GoToSleepBLEConfCallback : public BLECharacteristicCallbacks
   void onWrite(BLECharacteristic *pCharacteristic)
   {
     Log.notice("entering sleep mode\n");
-    
+
     xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
     globalStatus.goToSleep = true;
     xSemaphoreGive(globalStatus.sleepMutex);
@@ -179,13 +179,13 @@ void saveAlarm(String value)
 void initBLE()
 {
   BLECharacteristicConf confs[] = {
-      {WIFI_SET_SSID_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE, new WifiSetSsidBLEConfCallback() },
-      {WIFI_SET_PASSWORD_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE, new WifiSetPasswordBLEConfCallback() },
-      {WIFI_INIT_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new WifiResetBLEConfCallback() },
-      {WIFI_STATUS_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ, new WifiStatusBLEConfCallback() },
-      {ALARM_SET_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new AlarmSetBLEConfCallback() },
-      {LAST_OPERATION_STATUS_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ, new LastOperationStatusBLEConfCallback() },
-      {GO_TO_SLEEP_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new GoToSleepBLEConfCallback() }};
+      {WIFI_SET_SSID_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE, new WifiSetSsidBLEConfCallback()},
+      {WIFI_SET_PASSWORD_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE, new WifiSetPasswordBLEConfCallback()},
+      {WIFI_INIT_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new WifiResetBLEConfCallback()},
+      {WIFI_STATUS_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ, new WifiStatusBLEConfCallback()},
+      {ALARM_SET_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new AlarmSetBLEConfCallback()},
+      {LAST_OPERATION_STATUS_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ, new LastOperationStatusBLEConfCallback()},
+      {GO_TO_SLEEP_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE, new GoToSleepBLEConfCallback()}};
 
   startBLE(CONFIGURATION_SERVICE_UUID, confs, sizeof(confs) / sizeof(BLECharacteristicConf));
 }
@@ -204,7 +204,7 @@ void initDeviceName()
   static const char alphanum[] = "0123456789"
                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                  "abcdefghijklmnopqrstuvwxyz";
-  int size = 3;                                
+  int size = 3;
   char clientId[size + 1];
   for (uint8_t i = 0; i < size; i++)
   {
@@ -241,9 +241,9 @@ bool configurationStateActivateSleep()
 
   // if true goes to sleep but resets the value for the wake up
   bool goToSleepFlag = globalStatus.goToSleep;
-  globalStatus.goToSleep = false; 
+  globalStatus.goToSleep = false;
 
-  xSemaphoreGive(globalStatus.sleepMutex);  
+  xSemaphoreGive(globalStatus.sleepMutex);
 
   return goToSleepFlag;
 }
