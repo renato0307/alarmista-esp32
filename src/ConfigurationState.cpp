@@ -123,10 +123,7 @@ class GoToSleepBLEConfCallback : public BLECharacteristicCallbacks
   void onWrite(BLECharacteristic *pCharacteristic)
   {
     Log.notice("entering sleep mode\n");
-
-    xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
     globalStatus.goToSleep = true;
-    xSemaphoreGive(globalStatus.sleepMutex);
   }
 };
 
@@ -229,21 +226,17 @@ void configurationStateLoop()
   initDeviceName();
   initWifi();
   initBLE();
+
+  if (globalStatus.goToConfig) 
+  {
+    globalStatus.goToConfig = false;
+  }
 }
 
 // configurationStateActivateSleep will return true when the configuration is done
 // and the thing can exit configuration and enter sleep mode.
 bool configurationStateActivateSleep()
 {
-  xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
-
   Log.trace("going to sleep? %b\n", globalStatus.goToSleep);
-
-  // if true goes to sleep but resets the value for the wake up
-  bool goToSleepFlag = globalStatus.goToSleep;
-  globalStatus.goToSleep = false;
-
-  xSemaphoreGive(globalStatus.sleepMutex);
-
-  return goToSleepFlag;
+  return globalStatus.goToSleep;
 }

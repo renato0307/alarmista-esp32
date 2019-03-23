@@ -5,30 +5,29 @@
 #include "Settings.h"
 #include "ConfigurationState.h"
 #include "DeepSleepState.h"
-#include "UnimplementedStates.h"
+#include "SunriseState.h"
 
 const int STATE_DELAY = 1000;
 
 StateMachine machine = StateMachine();
 State *configurationState = machine.addState(&configurationStateLoop);
 State *deepSleepState = machine.addState(&deepSleepStateLoop);
-State *sunriseState = machine.addState(&loopSunriseState);
+State *sunriseState = machine.addState(&sunriseStateLoop);
 
 void setup()
 {
   Serial.begin(115200);
 
   Log.begin(LOG_LEVEL_TRACE, &Serial, true);
+  Log.notice("running global setup\n");
 
   settingsInit();
-
-  globalStatus.sleepMutex = xSemaphoreCreateMutex();
 
   configurationState->addTransition(&configurationStateActivateSleep, deepSleepState);
   deepSleepState->addTransition(&deepSleepStateButtonInterrupt, configurationState);
   deepSleepState->addTransition(&deepSleepStateTimerInterrupt, sunriseState);
-  sunriseState->addTransition(&sunriseButtonPress, configurationState);
-  sunriseState->addTransition(&sunriseAlarmTimeout, configurationState);
+  sunriseState->addTransition(&sunriseStateButtonPress, configurationState);
+  sunriseState->addTransition(&sunriseStateAlarmTimeout, configurationState);
 }
 
 void loop()
@@ -36,7 +35,7 @@ void loop()
   globalStatus.inDeepSleep = settingsGetInDeepSleep();
   if (globalStatus.inDeepSleep)
   {
-    Log.trace("Waking up from deep sleep\n");
+    Log.trace("waking up from deep sleep\n");
     machine.transitionTo(deepSleepState);
   }
 

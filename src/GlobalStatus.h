@@ -22,7 +22,6 @@ struct GlobalStatus
     String wifiSsid = "";
     String wifiPassword = "";
     String deviceName = "";
-    SemaphoreHandle_t sleepMutex;
 };
 
 extern GlobalStatus globalStatus;

@@ -7,7 +7,7 @@
 #include "Settings.h"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 300      /* Time ESP32 will go to sleep (in seconds) */
+#define TIME_TO_SLEEP 60      /* Time ESP32 will go to sleep (in seconds) */
 
 /* ========================================================================= 
    Private functions 
@@ -60,18 +60,14 @@ void deepSleepStateLoop()
     wakeup_reason = esp_sleep_get_wakeup_cause();
     if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0)
     {
-      xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
       globalStatus.goToConfig = true;
       settingsSaveInDeepSleep(false);
-      xSemaphoreGive(globalStatus.sleepMutex);
       return;
     }
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
-      xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
       globalStatus.goToSunrise = true;
       settingsSaveInDeepSleep(false);
-      xSemaphoreGive(globalStatus.sleepMutex);
       return;
     }
   }
@@ -89,26 +85,14 @@ void deepSleepStateLoop()
 // interrupted by a button press
 bool deepSleepStateButtonInterrupt()
 {
-  xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
-
   Log.trace("going to config? %b\n", globalStatus.goToConfig);
-  bool goToConfigFlag = globalStatus.goToConfig;
-  globalStatus.goToConfig = false;
-  xSemaphoreGive(globalStatus.sleepMutex);
-
-  return goToConfigFlag;
+  return globalStatus.goToConfig;
 }
 
 // deepSleepStateTimerInterrupt will return true when the sleep was
 // interrupted by a timer interrupt
 bool deepSleepStateTimerInterrupt()
 {
-  xSemaphoreTake(globalStatus.sleepMutex, portMAX_DELAY);
-
   Log.trace("going to sunrise? %b\n", globalStatus.goToSunrise);
-  bool goToSunriseFlag = globalStatus.goToSunrise;
-  globalStatus.goToSunrise = false;
-  xSemaphoreGive(globalStatus.sleepMutex);
-
-  return goToSunriseFlag;
+  return globalStatus.goToSunrise;
 }
