@@ -21,7 +21,7 @@ void startBLE(String serviceUuid, BLECharacteristicConf confs[], int confsSize)
   if (!globalStatus.isBleInitialized)
   {
 
-    Log.trace("creating ble server");
+    Log.trace("creating ble server\n");
     BLEDevice::init(globalStatus.deviceName.c_str());
     BLEServer *pServer = BLEDevice::createServer();
 

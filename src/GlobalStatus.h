@@ -13,6 +13,7 @@ struct Alarm {
 struct GlobalStatus {
     bool isBleInitialized = false;
     bool goToSleep = false;
+    bool goToConfig = false;
     bool inDeepSleep = false;
     String lastOperationStatus = "";
     String wifiSsid = "";

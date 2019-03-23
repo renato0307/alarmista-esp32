@@ -56,8 +56,8 @@ void loadWifiCredentials()
   Log.trace("reading wifi credentials from persistent storage\n");
   globalStatus.wifiSsid = settingsGetWifiSsid();
   globalStatus.wifiPassword = settingsGetWifiPassword();
-  Log.trace("wifi ssid is %s\n", globalStatus.wifiSsid.c_str());
-  Log.trace("wifi password is %s\n", globalStatus.wifiPassword.c_str());
+  Log.verbose("wifi ssid is %s\n", globalStatus.wifiSsid.c_str());
+  Log.verbose("wifi password is %s\n", globalStatus.wifiPassword.c_str());
 }
 
 // connectWifi establishes the wifi connection with timeout support.
@@ -77,13 +77,13 @@ void connectWifi()
 // global status configurations.
 void initWifi()
 {
+  loadWifiCredentials();
   if (isWiFiConnected())
   {
     Log.trace("connected to wifi, ip address is %s\n", WiFi.localIP().toString().c_str());
     return;
   }
 
-  loadWifiCredentials();
   if (globalStatus.wifiSsid == "" || globalStatus.wifiPassword == "")
   {
     Log.trace("wifi not configured\n");

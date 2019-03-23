@@ -72,6 +72,12 @@ class WifiSetSsidBLEConfCallback : public BLECharacteristicCallbacks
     Log.trace("setting wifi ssid to %s\n", value.c_str());
     globalStatus.wifiSsid = value;
   }
+
+  void onRead(BLECharacteristic *pCharacteristic)
+  {
+    pCharacteristic->setValue(globalStatus.wifiSsid.c_str());
+    Log.verbose("returning wifi ssid: %s\n", globalStatus.wifiSsid.c_str());
+  }    
 };
 
 // WifiResetBLEConfCallback handles wifi reset ble command
@@ -103,6 +109,12 @@ class WifiSetPasswordBLEConfCallback : public BLECharacteristicCallbacks
     Log.trace("setting wifi password to %s\n", value.c_str());
     globalStatus.wifiPassword = value;
   }
+
+  void onRead(BLECharacteristic *pCharacteristic)
+  {
+    pCharacteristic->setValue(globalStatus.wifiPassword.c_str());
+    Log.verbose("returning wifi password: %s\n", globalStatus.wifiPassword.c_str());
+  }  
 };
 
 // GoToSleepBLEConfCallback handles go to sleep ble command
