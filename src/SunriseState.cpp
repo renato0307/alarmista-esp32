@@ -51,7 +51,7 @@ TemperatureAndHumidity getTemperatureAndHumidity() {
 
   float heatIndex = dht.computeHeatIndex(newValues.temperature, newValues.humidity);
   float dewPoint = dht.computeDewPoint(newValues.temperature, newValues.humidity);
-  //float cr = dht.getComfortRatio(cf, newValues.temperature, newValues.humidity);
+  dht.getComfortRatio(cf, newValues.temperature, newValues.humidity);
 
   String comfortStatus;
   switch (cf) {
