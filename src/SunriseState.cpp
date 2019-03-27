@@ -157,7 +157,7 @@ void sunriseStateLoop()
     Log.trace("initializing temperature sensor\n");
     dht.setup(DHT_PIN, DHTesp::DHT11);
 
-    Log.trace("initializing leds");
+    Log.trace("initializing leds\n");
     FastLED.addLeds<NEOPIXEL, LEDS_PIN>(leds, NUM_LEDS);
 
     getTemperatureAndHumidity();

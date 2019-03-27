@@ -238,5 +238,13 @@ void configurationStateLoop()
 bool configurationStateActivateSleep()
 {
   Log.trace("going to sleep? %b\n", globalStatus.goToSleep);
+
+  Alarm alarm = settingsGetAlarm(1);
+  if (alarm.number != 1) 
+  {
+    Log.error("alarm 1 not found - please configure it first.\n");
+    globalStatus.goToSleep = false;
+  }
+
   return globalStatus.goToSleep;
 }

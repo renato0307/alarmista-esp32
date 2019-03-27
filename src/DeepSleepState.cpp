@@ -2,12 +2,14 @@
 
 #include <Arduino.h>
 #include <ArduinoLog.h>
+#include <WiFi.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
 #include "GlobalStatus.h"
 #include "Settings.h"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 60      /* Time ESP32 will go to sleep (in seconds) */
 
 /* ========================================================================= 
    Private functions 
@@ -42,6 +44,55 @@ void printWakeupReason()
   }
 }
 
+// getSecondsToSleep returns the number of seconds to sleep based on a specific alarm.
+unsigned long getSecondsToSleep(Alarm *alarm) {
+  Log.trace("alarm time in seconds is %d \n", alarm->when);
+
+  WiFiUDP ntpUDP;
+  NTPClient timeClient(ntpUDP);
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Log.error("wifi not connected, cannot fech current time\n");
+    return 0;
+  }
+
+  timeClient.begin();
+  // Set offset time in seconds to adjust for your timezone, for example:
+  // GMT +1 = 3600
+  // GMT +8 = 28800
+  // GMT -1 = -3600
+  // GMT 0 = 0
+  timeClient.setTimeOffset(0);
+  while(!timeClient.update()) {
+    timeClient.forceUpdate();
+  }
+  unsigned long currentTime = timeClient.getEpochTime();
+  Log.trace("current date time is %d (%s)\n", currentTime, timeClient.getFormattedTime());
+
+  unsigned long totalSecondsSinceStartDay = timeClient.getHours() * 60 * 60 + timeClient.getMinutes() * 60 + timeClient.getSeconds();
+  Log.verbose("total seconds since start day is %d\n", totalSecondsSinceStartDay);
+  
+  if (totalSecondsSinceStartDay < alarm->when) 
+  {
+    Log.verbose("alarm will fire today\n");
+    return alarm->when - totalSecondsSinceStartDay;
+  }
+
+  Log.verbose("alarm will fire tomorrow\n");
+
+  unsigned long startOfToday = currentTime - totalSecondsSinceStartDay;
+  Log.verbose("start of today in epoch is %d\n", startOfToday);
+
+  unsigned long tomorrowStartOfDay = startOfToday + (24*60*60);
+  Log.verbose("tomorrow start of day in epoch is %d\n", tomorrowStartOfDay);
+
+  unsigned long alarmTime = tomorrowStartOfDay + alarm->when;
+  Log.verbose("alarm time in epoch is %d\n", alarmTime);
+
+  return alarmTime - currentTime;
+}
+
 /* ========================================================================= 
    Public functions 
    ========================================================================= */
@@ -72,12 +123,37 @@ void deepSleepStateLoop()
     }
   }
 
-  Log.trace("going to sleep now\n");
+  Alarm alarm = settingsGetAlarm(1);
+  if (alarm.number != 1) 
+  {
+    Log.trace("alarm 1 not defined - going back to config.\n");
+    globalStatus.goToConfig = true;
+    settingsSaveInDeepSleep(false);
+    return;
+  }
+
+  long timeToSleep = getSecondsToSleep(&alarm);
+  if (timeToSleep == 0) 
+  {
+    Log.trace("invalid time to sleep returned - going back to config.\n");
+    globalStatus.goToConfig = true;
+    settingsSaveInDeepSleep(false);
+    return;
+  }
+
+  Log.trace("going to sleep now...\n");
   settingsSaveInDeepSleep(true);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-  Log.trace("setup ESP32 to sleep for every %s seconds\n", String(TIME_TO_SLEEP).c_str());
+  esp_err_t result = esp_sleep_enable_timer_wakeup(timeToSleep * uS_TO_S_FACTOR);
 
+  if (result != ESP_OK) 
+  {
+    Log.error("error enabling timer wakeup: %d - going back to config.\n", result);
+    globalStatus.goToConfig = true;
+    settingsSaveInDeepSleep(false);
+    return;
+  }
+  Log.trace("setup ESP32 to sleep for %s seconds\n", String(timeToSleep).c_str());
   esp_deep_sleep_start();
 }
 
