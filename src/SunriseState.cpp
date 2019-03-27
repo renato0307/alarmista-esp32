@@ -1,13 +1,30 @@
 #include <Arduino.h>
 #include <ArduinoLog.h>
+#include <FastLED.h>
 #include <DHTesp.h>
 
 #include "GlobalStatus.h"
 
+/* ========================================================================= 
+   Definitions 
+   ========================================================================= */
+
 #define BUTTON_INTERRUPT_PIN 13
 #define DHT_PIN 4
+#define NUM_LEDS 16
+#define LEDS_PIN 12
+
+struct TemperatureAndHumidity
+{
+    float temperature;
+    float humidity;
+    float heatIndex;
+    float dewPoint;
+    ComfortState cf;
+};
 
 DHTesp dht;
+CRGB leds[NUM_LEDS];
 
 /* ========================================================================= 
    Private functions 
@@ -19,15 +36,15 @@ void buttonInterrupt()
   globalStatus.goToConfig = true;
 }
 
-// logTemperature reads the temperature from DHT and prints it to log
-bool logTemperature() {
+// getTemperatureAndHumidity reads the temperature from DHT and prints it to log
+TemperatureAndHumidity getTemperatureAndHumidity() {
   // Reading temperature for humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (it's a very slow sensor)
   TempAndHumidity newValues = dht.getTempAndHumidity();
   // Check if any reads failed and exit early (to try again).
   if (dht.getStatus() != 0) {
     Log.error("DHT11 error status: %s\n", dht.getStatusString());
-    return false;
+    return TemperatureAndHumidity { };
   }
 
   ComfortState cf;
@@ -76,7 +93,49 @@ bool logTemperature() {
   Log.trace("dew point: %s\n", String(dewPoint).c_str());
   Log.trace("confort status: %s\n", comfortStatus.c_str());
 
-  return true;
+  return TemperatureAndHumidity { 
+    newValues.temperature, 
+    newValues.temperature,
+    heatIndex,
+    dewPoint,
+    cf };
+}
+
+
+// sunrise simulstes the sunrise using leds.
+bool sunrise() {
+
+  static bool sunrising = true;
+
+  // total sunrise length, in minutes
+  static const uint8_t sunriseLength = 30;
+
+  // how often (in seconds) should the heat color increase?
+  // for the default of 30 minutes, this should be about every 7 seconds
+  // 7 seconds x 256 gradient steps = 1,792 seconds = ~30 minutes
+  static const uint8_t interval = (sunriseLength * 60) / 256;
+
+  // current gradient palette color index
+  static uint8_t heatIndex = 0; // start out at 0
+
+  // HeatColors_p is a gradient palette built in to FastLED
+  // that fades from black to red, orange, yellow, white
+  // feel free to use another palette or define your own custom one
+  CRGB color = ColorFromPalette(HeatColors_p, heatIndex, heatIndex);
+
+  // fill the entire strip with the current color
+  fill_solid(leds, NUM_LEDS, color);
+
+  // slowly increase the heat
+  EVERY_N_SECONDS(interval) {
+    Log.trace("sunrise heat index is %d\n", heatIndex);
+    heatIndex++;
+    if (heatIndex == 254) {
+      sunrising = false;
+    }
+  }
+
+  return sunrising;
 }
 
 
@@ -98,9 +157,15 @@ void sunriseStateLoop()
     Log.trace("initializing temperature sensor\n");
     dht.setup(DHT_PIN, DHTesp::DHT11);
 
+    Log.trace("initializing leds");
+    FastLED.addLeds<NEOPIXEL, LEDS_PIN>(leds, NUM_LEDS);
+
+    getTemperatureAndHumidity();
+
     globalStatus.goToSunrise = false;
   }
-  logTemperature();
+
+  globalStatus.isAlarmTimeout = !sunrise();
 }
 
 // sunriseStateButtonPress returns true if any button is pressed during sunrise
@@ -113,5 +178,6 @@ bool sunriseStateButtonPress()
 // sunriseStateAlarmTimeout returns true the alarm finishes
 bool sunriseStateAlarmTimeout()
 {
-  return false;
+  Log.trace("is alarm timeout? %b\n", globalStatus.isAlarmTimeout);
+  return globalStatus.isAlarmTimeout;
 }

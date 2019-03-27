@@ -44,7 +44,6 @@ void startBLE(String serviceUuid, BLECharacteristicConf confs[], int confsSize)
     pServer->getAdvertising()->start();
 
     globalStatus.isBleInitialized = true;
-
     Log.trace("listening on bluetooth as [%s]\n", globalStatus.deviceName.c_str());
   }
 }
